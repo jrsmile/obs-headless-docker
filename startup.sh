@@ -76,7 +76,7 @@ HTTP_PASSWORD=
 if [ -n "$TWITCH_KEY" ]; then
     echo "* enable Twitch streaming"
     sed -i "s/streamkey/$TWITCH_KEY/" /opt/supervisor-twitch.conf
-    cp /opt/supervisor-twitch.conf /etc/supervisord/config.d/supervisor-twitch.conf
+    cp /opt/supervisor-twitch.conf /etc/supervisor/conf.d/supervisor-twitch.conf
 fi
 
 exec /bin/tini -- supervisord -n -c /etc/supervisor/supervisord.conf
