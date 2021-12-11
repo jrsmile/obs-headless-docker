@@ -8,6 +8,8 @@ logging.basicConfig(level=logging.INFO)
 
 sys.path.append('../')
 import json
+from collections import deque
+from statistics import mean
 from obswebsocket import obsws,requests  # noqa: E402
 from typing import Optional
 from fastapi import FastAPI, Request
@@ -16,6 +18,11 @@ app = FastAPI()
 host = "localhost"
 port = 4444
 password = "secret"
+avg_bitrate = 2000
+
+d = deque(maxlen=10)
+for i in range(10):
+    d.append(avg_bitrate)
 
 @app.post("/sls/on_event")
 async def on_event(on_event: str, role_name: str, srt_url: str, remote_ip: str, remote_port: str):
@@ -41,13 +48,16 @@ async def on_stat(request: Request):
         logging.debug(json.dumps(jobj, indent=4, sort_keys=True))
         for s in range(len(jobj)):
             if jobj[s]['pub_domain_app'] == "input/live" and jobj[s]['role'] == "publisher" and jobj[s]['stream_name'] == "desktop":
-                print("Current source Bitrate is: {}".format(jobj[s]['kbitrate']))
+                global d
+                d.append(int(jobj[s]['kbitrate']))
+                avg_bit = mean(d)
+                print("### Current Bitrate is: {}, average Bitrate is: {} ###".format(jobj[s]['kbitrate'], avg_bit))
                 ws = obsws(host, port, password)
                 ws.connect()
-                if int(jobj[s]['kbitrate']) <= 2500:
+                if avg_bit <= avg_bitrate:
                     ws.call(requests.SetCurrentScene("Fallback"))
                     print("Current bitrate to low, switching to Fallback Stream")
-                elif int(jobj[s]['kbitrate']) > 2500:
+                elif avg_bit > avg_bitrate:
                     ws.call(requests.SetCurrentScene("Stream"))
                     print("Current bitrate high enough, switching to Live Stream")
                 ws.disconnect()
