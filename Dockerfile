@@ -66,5 +66,5 @@ COPY media/ /root/media/
 COPY supervisor-obs.conf /etc/supervisor/conf.d/
 
 # relay output stream to twitch
-
-COPY supervisor-twitch.conf /etc/supervisor/conf.d/
+COPY startup.sh /
+COPY supervisor-twitch.conf /opt
