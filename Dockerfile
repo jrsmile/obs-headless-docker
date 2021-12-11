@@ -40,7 +40,9 @@ RUN curl -sL -o "/tmp/obs-websocket.deb" 'https://github.com/obsproject/obs-webs
 WORKDIR /tmp
 RUN git clone https://github.com/Haivision/srt.git && cd srt && ./configure && make && make install
 
-RUN git clone https://github.com/Edward-Wu/srt-live-server.git && cd srt-live-server && make && cp bin/sls /usr/local/bin/
+#RUN git clone https://github.com/Edward-Wu/srt-live-server.git && cd srt-live-server && make && cp bin/sls /usr/local/bin/
+#RUN git clone https://github.com/odensc/srt-live-server.git && cd srt-live-server && make && cp bin/sls /usr/local/bin/
+RUN git clone https://github.com/jrsmile/srt-live-server.git && cd srt-live-server && make && cp bin/sls /usr/local/bin/
 
 COPY sls.conf /etc/sls/
 
