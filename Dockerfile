@@ -61,4 +61,7 @@ COPY obs-settings/ /root/.config/obs-studio/
 
 COPY media/ /root/media/
 
+# autostart obs and start streaming
+
+COPY supervisor-obs.conf /etc/supervisor/conf.d/
 #CMD [ "/usr/bin/obs" ]

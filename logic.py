@@ -27,10 +27,10 @@ async def on_event(on_event: str, role_name: str, srt_url: str, remote_ip: str, 
         elif on_event=="on_close" and role_name == "publisher":
             ws.call(requests.SetCurrentScene("Fallback"))
         else:
-            print(f'Unknown on_event: {on_event} or role: {role_name}')
+            logging.warning(f'Unknown on_event: {on_event} or role: {role_name}')
         ws.disconnect()
     except:
-        print('could not connect to obs')
+        logging.error('could not connect to obs')
     return {"OK": remote_ip}
 
 @app.post("/sls/stat")
@@ -38,10 +38,31 @@ async def on_stat(request: Request):
     rbody = await request.body()
     try:
         jobj = json.loads(rbody)
-        print(json.dumps(jobj, indent=4, sort_keys=True))
-    except:
-        print("could not convert stats to json object")
+        logging.debug(json.dumps(jobj, indent=4, sort_keys=True))
+        for s in range(len(jobj)):
+            if jobj[s]['pub_domain_app'] == "input/live" and jobj[s]['role'] == "publisher" and jobj[s]['stream_name'] == "desktop":
+                print("Current source Bitrate is: {}".format(jobj[s]['kbitrate']))
+                ws = obsws(host, port, password)
+                ws.connect()
+                if int(jobj[s]['kbitrate']) <= 2500:
+                    ws.call(requests.SetCurrentScene("Fallback"))
+                    print("Current bitrate to low, switching to Fallback Stream")
+                elif int(jobj[s]['kbitrate']) > 2500:
+                    ws.call(requests.SetCurrentScene("Stream"))
+                    print("Current bitrate high enough, switching to Live Stream")
+                ws.disconnect()
+    except Exception as e:
+        print('Failed JSON Parsing: '+ str(e))
     #print(rbody)
     return {"Message": "OK"}
 
-# [,{"port": "1935","role": "publisher","pub_domain_app": "input/live","stream_name": "obs","url": "input/live/obs","remote_ip": "127.0.0.1","remote_port": "40348","start_time": "2021-12-11 08:29:02","kbitrate":"2632"},{"port": "1935","role": "player","pub_domain_app": "input/live","stream_name": "desktop","url": "output/live/desktop","remote_ip": "127.0.0.1","remote_port": "43256","start_time": "2021-12-11 08:28:59","kbitrate":"851"},{"port": "1935","role": "publisher","pub_domain_app": "input/live","stream_name": "desktop","url": "input/live/desktop","remote_ip": "95.88.201.37","remote_port": "60371","start_time": "2021-12-11 08:28:46","kbitrate":"829"},{"port": "1935","role": "listener","pub_domain_app": "","stream_name": "","url": "","remote_ip": "","remote_port": "","start_time": "2021-12-11 08:28:50","kbitrate": "0"}]
+
+#"kbitrate": "6151",
+#"port": "1935",
+#"pub_domain_app": "input/live",
+#"remote_ip": "95.88.201.37",
+#"remote_port": "61257",
+#"role": "publisher",
+#"start_time": "2021-12-11 10:23:47",
+#"stream_name": "desktop",
+#"url": "input/live/desktop"
