@@ -1,0 +1,5 @@
+#!/bin/bash
+docker build -t obs-headless .
+docker run --rm -p 5900:5900 -p 1935:1935 -p 1935:1935/udp -e VNC_PASSWORD=password -v /dev/shm obs-headless:latest
+#docker run --rm -p 5900:5900 -p 1935:1935 -p 1935:1935/udp -e VNC_PASSWORD=password -v /dev/shm -v $PWD/obs-settings:/root/.config/obs-studio -v $PWD/media:/root/media obs-headless:latest
+#docker run --rm -p 5900:5900 -e RESOLUTION=1920x1080 -p 4444:4444 -p 1935:1935 -p 1935:1935/udp -e VNC_PASSWORD=password -v /dev/shm -v $PWD/obs-settings:/root/.config/obs-studio -v $PWD/media:/root/media obs-headless:latest

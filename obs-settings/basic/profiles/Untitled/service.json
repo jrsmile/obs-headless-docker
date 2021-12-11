@@ -1,0 +1,1 @@
+{"settings":{"bwtest":false,"key":"","server":"srt://127.0.0.1:1935?streamid=input/live/obs&mode=caller","use_auth":false},"type":"rtmp_custom"}
