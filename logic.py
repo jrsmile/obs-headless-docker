@@ -4,7 +4,7 @@
 import sys
 import time
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 sys.path.append('../')
 import json
@@ -54,12 +54,16 @@ async def on_stat(request: Request):
                 print("### Current Bitrate is: {}, average Bitrate is: {} ###".format(jobj[s]['kbitrate'], avg_bit))
                 ws = obsws(host, port, password)
                 ws.connect()
+                scene = ws.call(requests.GetCurrentScene())
+                sceneName = scene.getName()
                 if avg_bit <= avg_bitrate:
-                    ws.call(requests.SetCurrentScene("Fallback"))
-                    print("Current bitrate to low, switching to Fallback Stream")
+                    if sceneName != "Fallback":
+                        ws.call(requests.SetCurrentScene("Fallback"))
+                        print("Current bitrate to low, switching to Fallback Stream")
                 elif avg_bit > avg_bitrate:
-                    ws.call(requests.SetCurrentScene("Stream"))
-                    print("Current bitrate high enough, switching to Live Stream")
+                    if sceneName != "Stream":
+                        ws.call(requests.SetCurrentScene("Stream"))
+                        print("Current bitrate high enough, switching to Live Stream")
                 ws.disconnect()
     except Exception as e:
         print('Failed JSON Parsing: '+ str(e))
