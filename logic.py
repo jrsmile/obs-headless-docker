@@ -18,7 +18,7 @@ app = FastAPI()
 host = "localhost"
 port = 4444
 password = "secret"
-avg_bitrate = 2000
+avg_bitrate = 2500
 
 d = deque(maxlen=10)
 for i in range(10):
@@ -57,8 +57,8 @@ async def on_stat(request: Request):
                 scene = ws.call(requests.GetCurrentScene())
                 sceneName = scene.getName()
                 if avg_bit <= avg_bitrate:
-                    if sceneName != "Fallback":
-                        ws.call(requests.SetCurrentScene("Fallback"))
+                    if sceneName != "Low":
+                        ws.call(requests.SetCurrentScene("Low"))
                         print("Current bitrate to low, switching to Fallback Stream")
                 elif avg_bit > avg_bitrate:
                     if sceneName != "Stream":

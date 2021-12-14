@@ -26,6 +26,7 @@ RUN apt-get update \
     git \
     openssl \
     python3-pip \
+    unzip \
     && apt-get autoclean \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
@@ -48,7 +49,6 @@ COPY sls.conf /etc/sls/
 
 COPY supervisor-sls.conf /etc/supervisor/conf.d/
 
-
 # add scene switch logic
 
 RUN pip install obs-websocket-py fastapi "uvicorn[standard]"
@@ -60,6 +60,12 @@ COPY logic.py /opt/
 COPY obs-settings/ /root/.config/obs-studio/
 
 COPY media/ /root/media/
+
+# add transition plugin
+RUN curl -sLJO "https://obsproject.com/forum/resources/move-transition.913/version/3727/download?file=75979" && \
+    mkdir -p /root/.config/obs-studio/plugins/ && \
+    unzip "/tmp/move-transition-2.5.2-linux64.tar.gz.zip" && \
+    tar -xzf "/tmp/move-transition-2021-10-10-56a708ae58ed8a293c71b3510a8c7670f9f421a3-linux64.tar.gz" --directory "/root/.config/obs-studio/plugins/"
 
 # autostart obs and start streaming
 
