@@ -4,7 +4,8 @@
 import sys
 import time
 import logging
-logging.basicConfig(level=logging.WARNING)
+FORMAT = '%(asctime)s %(levelname)s %(message)s'
+logging.basicConfig(format=FORMAT,stream=sys.stdout,level=logging.INFO)
 
 sys.path.append('../')
 import json
@@ -18,10 +19,10 @@ app = FastAPI()
 host = "localhost"
 port = 4444
 password = "secret"
-avg_bitrate = 2500
+avg_bitrate = 6000
 
-d = deque(maxlen=10)
-for i in range(10):
+d = deque(maxlen=60)
+for i in range(60):
     d.append(avg_bitrate)
 
 @app.post("/sls/on_event")
@@ -29,9 +30,11 @@ async def on_event(on_event: str, role_name: str, srt_url: str, remote_ip: str, 
     try:
         ws = obsws(host, port, password)
         ws.connect()
-        if on_event=="on_connect" and role_name == "publisher":
+        if on_event=="on_connect" and role_name == "publisher" and srt_url == "input/live/desktop":
+            logging.info(f"New Publisher connected to {srt_url}, switching to Livestream in 5 Seconds...")
             ws.call(requests.SetCurrentScene("Stream"))
-        elif on_event=="on_close" and role_name == "publisher":
+        elif on_event=="on_close" and role_name == "publisher" and srt_url == "input/live/desktop":
+            logging.info(f"Publisher disconnected from {srt_url}, switching to Fallback in 5 Seconds...")
             ws.call(requests.SetCurrentScene("Fallback"))
         else:
             logging.warning(f'Unknown on_event: {on_event} or role: {role_name}')
@@ -50,23 +53,23 @@ async def on_stat(request: Request):
             if jobj[s]['pub_domain_app'] == "input/live" and jobj[s]['role'] == "publisher" and jobj[s]['stream_name'] == "desktop":
                 global d
                 d.append(int(jobj[s]['kbitrate']))
-                avg_bit = mean(d)
-                print("### Current Bitrate is: {}, average Bitrate is: {} ###".format(jobj[s]['kbitrate'], avg_bit))
+                avg_bit = int(mean(d))
+                logging.info("### Current Bitrate is: {}, average Bitrate is: {} ###".format(jobj[s]['kbitrate'], avg_bit))
                 ws = obsws(host, port, password)
                 ws.connect()
                 scene = ws.call(requests.GetCurrentScene())
                 sceneName = scene.getName()
-                if avg_bit <= avg_bitrate:
+                if avg_bit < avg_bitrate:
                     if sceneName != "Low":
                         ws.call(requests.SetCurrentScene("Low"))
-                        print("Current bitrate to low, switching to Fallback Stream")
-                elif avg_bit > avg_bitrate:
+                        logging.warning("Current bitrate to low, switching to Fallback Stream")
+                elif avg_bit >= avg_bitrate:
                     if sceneName != "Stream":
                         ws.call(requests.SetCurrentScene("Stream"))
-                        print("Current bitrate high enough, switching to Live Stream")
+                        logging.warning("Current bitrate high enough, switching to Live Stream")
                 ws.disconnect()
     except Exception as e:
-        print('Failed JSON Parsing: '+ str(e))
+        logging.error('Failed JSON Parsing: '+ str(e))
     #print(rbody)
     return {"Message": "OK"}
 
